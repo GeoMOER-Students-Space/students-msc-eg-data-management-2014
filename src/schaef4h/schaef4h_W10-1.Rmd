@@ -1,0 +1,73 @@
+Please create a short tutorial on how to write a function that visualizes a spatial point vector attribute over a contrast stretched raster image. A discrete legend for the attribute values and a continuous legend for the raster image should be part of the plot. Show how it works by visualizing the number of natural vegetation species over a greyscale image of Landsat band 3 from the Fogo dataset. The tutorial should include the R code, an explanation of the code and the result of the code (i.e. it should be something like the examples you find in this course).
+
+1)
+Im ersten Schritt wird das Arbeitsverzeichnis festgelegt und für die Bearbeitung der Aufgabe nötige Packages geladen. 
+
+```{r, message=FALSE}
+library(sp)
+library(raster)
+library(rgdal)
+library(RColorBrewer)
+library(latticeExtra)
+```
+
+2)
+Innerhalb des zweiten Schritts der Bearbeitung der Aufgabe werden die nötigen Datengrundlagen hereingeladen. Dies ist zum einen das vorliegende Raster der Insel Fogo (fogo.tif) sowie die Daten der im Jahr 2014 erfolgten Aufnahme der Arten (survey2014). Daraufhin erfolgt die Zuweisung der im Raster fogo.tif enthaltenen Projektion auf den Vektor survey2014 
+
+```{r}
+setwd ("C:/Users/Karsten/Dropbox/msc_environmental_geography/semester_1/datamanagement/data")
+fogo.rast <- raster("LC82100502014328LGN00_B10.tif")
+survey2014 <- readOGR("data_2014_subset1.shp", "data_2014_subset1")
+survey2014 <- spTransform(survey2014, CRS(projection(fogo.rast)))
+```
+
+3)
+Im dritten Schritt erfolgt schließlich die Definition der für die Darstellung nötigen Funktion. Diese definiert bspw. mit welcher Farbe das Raster oder der Vektordatensatz dargestellt wird und wie die Daten klassifiziert werden. 
+
+Hier noch einfügen: 
+Übergabe einer Möglichkeit, eine benutzerdefinierte Farbskala einzugeben 
+etwa so...
+
+create.map <- function (raster, vector, vector_colors == "default"){
+if(vector_colors == "default")
+}
+
+
+```{r}
+create.map <- function (tif, survey){
+  vector_classes <- cut(survey@data$COVRG, c(0, 20, 40, 60, 80, 100, 120))
+  vector_colors <- colorRampPalette(brewer.pal(6,"Reds"))(6)
+  min <- max(mean(getValues(tif)) - sd(getValues(tif)), 0)
+  max <- mean(getValues(tif)) + sd(getValues(tif))
+  
+  breaks <- seq(min, max, length.out = 256)
+  yat = seq(extent(tif)@ymin, 
+            extent(tif)@ymax, length.out = 5)
+  xat = seq(extent(tif)@xmin, 
+            extent(tif)@xmax, length.out = 5)
+  
+  
+  
+  plt <- spplot(tif, col.regions = gray.colors(256), at = breaks,
+              key = list(space = 'left', text = list(levels(vector_classes)), 
+              points = list(pch = 21, cex = 2, fill = vector_colors)),
+                colorkey=list(space="right"),
+                panel = function(...){
+                  panel.levelplot(...)
+                  panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+                }
+  )
+  
+  orl <- spplot(survey, zcol = "COVRG", col.regions = vector_colors, 
+                cuts = c(0, 20, 40, 60, 80, 100, 120))
+  
+  plt + as.layer(orl)
+}
+```
+
+4)
+Abschließend erfolgt die Anwendung der Funktion auf die Schritt 2) eingelesenen Daten. 
+
+```{r}
+create.map(fogo.rast, survey2014)
+```
