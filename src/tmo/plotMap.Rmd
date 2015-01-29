@@ -1,0 +1,86 @@
+---
+title: "Kartendarstellungen in R"
+author: "Elena Rinn"
+date: "Thursday, January 15, 2015"
+output: html_document
+---
+
+Dieses Skript beinhaltet eine Funktion mit welcher ein Raster-Layer und Daten
+aus einer Vektordatei in einem gemeinsamen Plot dargestellt werden können. Es 
+wird außerdem eine Legende und ein Koordinatengitter erzeugt.
+
+Die folgende Pakete werden dazu benötigt.
+```{r, warning = FALSE, message = FALSE}
+library("raster")
+library("RColorBrewer")
+library("latticeExtra")
+library("maptools")
+```
+
+```{r, echo = FALSE, message = FALSE, results="hide"}
+# Landsat-Datei
+landsat <- raster("D:/DataManagement/Data/LandsatFOGO/LC82100502014328LGN00_B3.tif")
+
+# BIS-Fogo
+survey <- readOGR("D:/DataManagement/Data/LandsatFOGO/data_2014_subset1.shp", 
+                  "data_2014_subset1")
+survey <- spTransform(survey, crs("+proj=utm +zone=26 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"))
+
+survey[3]
+
+```
+
+Der Funktion plotMap(ras, vec, col) werden eine Raster-Datei und ein 
+SpatialPointsDataFrame, sowie die Position der darzustellenden Attributspalte übergeben. Die räumlichen Daten  müssen bereits in der gleichen Projektion vorliegen.
+
+Die einzelnen Arbeitsschritte werden im Code selbst kommentiert.
+
+```{r}
+
+
+
+plotMap <- function(ras, vec, col){
+  # Kontraststreckung mit Standardabweichung
+  min <- max(mean(getValues(ras)) - sd(getValues(ras)), 0)
+  max <- mean(getValues(ras)) + sd(getValues(ras))
+
+  breaks <- seq(min, max, length.out = 256)
+
+  # Definition des Koordinatensystems
+  yat = seq(extent(ras)@ymin, 
+            extent(ras)@ymax, length.out = 5)
+  xat = seq(extent(ras)@xmin, 
+            extent(ras)@xmax, length.out = 5)
+
+  # Vektordaten in Klassen einteilen
+  vector_classes <- cut(survey@data[[col]], 6)
+
+  # Farbschema für die Vektrodaten definieren
+  vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)
+
+  # Raster-Plot und beide Legenden definieren
+  plt <- spplot(ras, col.regions = gray.colors(256), at = breaks,
+                key = list(space = 'left', text = list(levels(vector_classes)), 
+                           points = list(pch = 21, cex = 2, fill = vector_colors)),
+                colorkey=list(space="right"),
+                panel = function(...){
+                  panel.levelplot(...)
+                  panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+                },
+                scales = list(x = list(at = xat),
+                              y = list(at = yat)))
+
+  # Vektorplot definieren
+  orl <- spplot(vec, zcol = col, col.regions = vector_colors)
+
+  # beide Plots zusammenfuegen
+  plt + as.layer(orl)
+}
+```
+
+So sieht das Endergebnis aus:
+
+```{r, echo = FALSE}
+plotMap(landsat, survey, col = 3)
+
+```
