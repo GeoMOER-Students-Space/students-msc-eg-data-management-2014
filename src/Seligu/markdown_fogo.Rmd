@@ -1,0 +1,60 @@
+## Mapping a vector into a landsat image
+========================================================
+
+*things we need for this worksheet*
+
+* Landsat raster image B10 
+* vector data_2014_subset 
+
+*Before we start writing our code, we need to do some preprocessing*
+
+load your requiered workspace and libraries
+```{r,message=FALSE}
+library(sp)
+library(raster)
+library(rgdal)
+library(RColorBrewer)
+library(latticeExtra)
+```
+
+```{r,echo=FALSE, message=FALSE, results="hide"}
+setwd("D:/UNI/Master/WS_14-15/Data_management/Fogo/")
+raster <- raster("LC82100502014328LGN00_B3.tif")
+vector <- readOGR("data_2014_subset1.shp", "data_2014_subset1")
+vector_proj <- spTransform(vector, CRS(projection(raster)))
+```
+
+write a function for natural species, including the underlaying Landsat image, legend, colorramp for this vector natural species
+```{r,}
+NAT_MAP <- function (raster, vector){
+vector_classes <- cut(vector@data$NAT, c(0, 1, 2, 3, 4, 5, 6, 7, 8, 9))
+vector_colors <- colorRampPalette(brewer.pal(9,"YlGn"))(9)
+
+yat = seq(extent(raster)@ymin, 
+                extent(raster)@ymax, length.out = 5)
+xat = seq(extent(raster)@xmin, 
+                extent(raster)@xmax, length.out = 5)
+
+
+plt <- spplot(raster, col.regions = gray.colors(256),
+              key = list(space = 'left', text = list(levels(vector_classes)), 
+                         points = list(pch = 21, cex = 3, fill = vector_colors)),
+              colorkey=list(space="bottom"),
+              panel = function(...){
+                panel.levelplot(...)
+                panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+              },
+              scales = list(x = list(at = xat),
+                            y = list(at = yat)))
+
+orl <- spplot(vector, zcol = "NAT", col.regions = vector_colors) 
+              
+plt + as.layer(orl)
+}
+```
+
+Run the main function
+```{r, echo=TRUE, include=TRUE}
+NAT_MAP (raster, vector_proj)
+```
+
