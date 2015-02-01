@@ -1,0 +1,84 @@
+---
+title: "The how-to you always wanted"
+author: "Lin Zhong"
+date: "Thursday, January 15, 2015"
+output: html_document
+---
+Today we learn how to write a function which visualizes a spatial point vector attribute over a constrast strechted raster image. We take the data of the survey 2014 in Fogo as an example. For this section, package sp,rgdal,raster,RColorBrewer, lattice and latticeExtra are request.
+
+```{r,echo=FALSE,eval=FALSE,warning=FALSE}
+library(sp)
+library(rgdal)
+library(raster)
+library(RColorBrewer)
+library(lattice)
+library(latticeExtra)
+
+setwd("D:/1_uni/Environment GeographyWS14-15/data management/w08/fogo_landsat_2014-11-24/")
+
+```
+
+Before we go to the core of today, we must firstly finish our prepare work^.^ Read the raster and shape file and adapt the projection as we did before after loading the packages we need.
+
+```{r,eval=FALSE}
+
+landsat <- raster("LC82100502014328LGN00_B10.tif")
+vegetation <- readOGR("data_2014_subset1.shp", layer = "data_2014_subset1")
+vegetation_utm<-spTransform(vegetation, CRS(projection(landsat)))
+
+```
+
+At the second step we reach the main part of today's content:write the function!
+
+```{r}
+
+map <- function(raster,vector){
+  
+  min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
+  max <- mean(getValues(raster)) + sd(getValues(raster))
+
+  breaks <- seq(min, max, length.out = 256)
+  
+  yat = seq(extent(raster)@ymin, 
+                extent(raster)@ymax, length.out = 5)
+  xat = seq(extent(raster)@xmin, 
+                extent(raster)@xmax, length.out = 5)
+
+  vector_classes <- cut(vector@data$COVRG, 6)
+
+  vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6) 
+  
+  plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+       key = list(space = 'left', text = list(levels(vector_classes)), 
+                     points = list(pch = 21, cex = 2, fill = vector_colors)),
+       colorkey=list(space="right"),
+       panel = function(...){
+         panel.levelplot(...)
+         panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+         },
+       scales = list(x = list(at = xat),
+                     y = list(at = yat)))
+
+  orl <- spplot(vector, zcol = "COVRG", col.regions = vector_colors)
+
+  plt + as.layer(orl)
+
+}
+
+```
+
+Call the function now
+
+```{r,eval=FALSE}
+map(landsat,vegetation_utm)
+
+```
+
+If you want to call the function anytime,you can save the function in a separat R file and then  just use source() command to call it out whenever you want!
+
+```{r,echo=TRUE,eval=FALSE}
+source("map.R")
+map(landsat,vegetation_utm)
+```
+
+Hope you enjoy this time!
