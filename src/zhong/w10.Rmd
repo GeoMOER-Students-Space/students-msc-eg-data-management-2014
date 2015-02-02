@@ -6,21 +6,23 @@ output: html_document
 ---
 Today we learn how to write a function which visualizes a spatial point vector attribute over a constrast strechted raster image. We take the data of the survey 2014 in Fogo as an example. For this section, package sp,rgdal,raster,RColorBrewer, lattice and latticeExtra are request.
 
-```{r,echo=FALSE,eval=FALSE,warning=FALSE}
+```{r,message=FALSE}
 library(sp)
 library(rgdal)
 library(raster)
 library(RColorBrewer)
 library(lattice)
 library(latticeExtra)
+```
 
-setwd("D:/1_uni/Environment GeographyWS14-15/data management/w08/fogo_landsat_2014-11-24/")
+```{r,echo=FALSE,message=FALSE}
+setwd("D:/1_uni/Environment GeographyWS14-15/data management/meg-dm-2014-winter/src/zhong")
 
 ```
 
 Before we go to the core of today, we must firstly finish our prepare work^.^ Read the raster and shape file and adapt the projection as we did before after loading the packages we need.
 
-```{r,eval=FALSE}
+```{r,results="hide"}
 
 landsat <- raster("LC82100502014328LGN00_B10.tif")
 vegetation <- readOGR("data_2014_subset1.shp", layer = "data_2014_subset1")
@@ -28,11 +30,11 @@ vegetation_utm<-spTransform(vegetation, CRS(projection(landsat)))
 
 ```
 
-At the second step we reach the main part of today's content:write the function!
+At the second step we reach the main part of today's content: write the function!
 
-```{r}
+```{r,warning=FALSE}
 
-map <- function(raster,vector){
+map <- function(raster,vector,vector_colors= "default",gnbr,attr){
   
   min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
   max <- mean(getValues(raster)) + sd(getValues(raster))
@@ -40,13 +42,18 @@ map <- function(raster,vector){
   breaks <- seq(min, max, length.out = 256)
   
   yat = seq(extent(raster)@ymin, 
-                extent(raster)@ymax, length.out = 5)
+                extent(raster)@ymax, length.out = gnbr)
   xat = seq(extent(raster)@xmin, 
-                extent(raster)@xmax, length.out = 5)
+                extent(raster)@xmax, length.out = gnbr)
 
   vector_classes <- cut(vector@data$COVRG, 6)
 
-  vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6) 
+  if(vector_colors == "default"){
+    
+   vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6) 
+  
+   }
+  
   
   plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
        key = list(space = 'left', text = list(levels(vector_classes)), 
@@ -54,7 +61,7 @@ map <- function(raster,vector){
        colorkey=list(space="right"),
        panel = function(...){
          panel.levelplot(...)
-         panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+         panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = attr) 
          },
        scales = list(x = list(at = xat),
                      y = list(at = yat)))
@@ -69,8 +76,9 @@ map <- function(raster,vector){
 
 Call the function now
 
-```{r,eval=FALSE}
-map(landsat,vegetation_utm)
+```{r,warning=FALSE}
+vcol <- colorRampPalette(brewer.pal(6,"Reds"))(6) 
+map(landsat,vegetation_utm,vcol,4,3)
 
 ```
 
@@ -78,7 +86,14 @@ If you want to call the function anytime,you can save the function in a separat 
 
 ```{r,echo=TRUE,eval=FALSE}
 source("map.R")
-map(landsat,vegetation_utm)
+vcol <- colorRampPalette(brewer.pal(6,"Blues"))(6) 
+map(landsat,vegetation_utm,vcol,4,3)
+```
+
+```{r,echo=FALSE,warning=FALSE}
+vcol <- colorRampPalette(brewer.pal(6,"Blues"))(6) 
+map(landsat,vegetation_utm,vcol,4,3)
+
 ```
 
 Hope you enjoy this time!
