@@ -37,9 +37,7 @@ Die einzelnen Arbeitsschritte werden im Code selbst kommentiert.
 
 ```{r}
 
-
-
-plotMap <- function(ras, vec, col){
+plotMap <- function(ras, vec, col, grid=5, vector_colors = "default"){
   # Kontraststreckung mit Standardabweichung
   min <- max(mean(getValues(ras)) - sd(getValues(ras)), 0)
   max <- mean(getValues(ras)) + sd(getValues(ras))
@@ -48,15 +46,17 @@ plotMap <- function(ras, vec, col){
 
   # Definition des Koordinatensystems
   yat = seq(extent(ras)@ymin, 
-            extent(ras)@ymax, length.out = 5)
+            extent(ras)@ymax, length.out = grid)
   xat = seq(extent(ras)@xmin, 
-            extent(ras)@xmax, length.out = 5)
+            extent(ras)@xmax, length.out = grid)
 
   # Vektordaten in Klassen einteilen
   vector_classes <- cut(survey@data[[col]], 6)
 
   # Farbschema für die Vektrodaten definieren
-  vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)
+  if(vector_colors == "default"){
+    vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)  
+  }
 
   # Raster-Plot und beide Legenden definieren
   plt <- spplot(ras, col.regions = gray.colors(256), at = breaks,
@@ -80,7 +80,10 @@ plotMap <- function(ras, vec, col){
 
 So sieht das Endergebnis aus:
 
-```{r, echo = FALSE}
-plotMap(landsat, survey, col = 3)
+```{r, echo = FALSE, warning=FALSE}
+#benutzerdefinierte Farbpalette
+col <- colorRampPalette(brewer.pal(6,"Reds"))(6)
+
+plotMap(landsat, survey, col = 3, grid = 4, vector_colors = col)
 
 ```
