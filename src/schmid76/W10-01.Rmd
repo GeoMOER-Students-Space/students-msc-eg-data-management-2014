@@ -35,8 +35,20 @@ For this purpose we create a function that creates all settings for our plot usi
 different modules like cut() for setting our colorclasses of the NDVI Image.
 Creating a function allows us to use different datasets with the same properties of the plot.
 ```{r,warning=FALSE,eval=TRUE,message=FALSE}
+  
+
+
 #plotting function
-image.plot<-function(coverage,landsat){
+image.plot<-function(coverage,landsat,gridnum=5){
+#   entry<-FALSE
+#     while(entry==FALSE){
+#       gridnum<-readline("Please submit your desired gridsize:")
+#       gridnum<- ifelse(grepl("\\D",gridnum),-1,as.integer(gridnum))
+#       if (gridnum>=0){
+#         entry<-TRUE
+#       }
+#     }
+
   vector_classes <- cut(coverage@data$COVRG, c(0, 20, 40, 60, 80, 100, 120))
   vector_colors <- colorRampPalette(brewer.pal(6,"Blues"))(6)
   min <- max(mean(getValues(landsat)) - sd(getValues(landsat)), 0)
@@ -44,18 +56,19 @@ image.plot<-function(coverage,landsat){
   
   breaks <- seq(min, max, length.out = 256)
   yat = seq(extent(landsat)@ymin, 
-                  extent(landsat)@ymax, length.out = 5)
+                  extent(landsat)@ymax, length.out = gridnum)
   xat = seq(extent(landsat)@xmin, 
-                  extent(landsat)@xmax, length.out = 5)
+                  extent(landsat)@xmax, length.out = gridnum)
 
   plt <- spplot(landsat, col.regions = gray.colors(256), at = breaks,
        key = list(space = 'left', text = list(levels(vector_classes)), 
                      points = list(pch = 21, cex = 2, fill = vector_colors)),
-       colorkey=list(space="right"),
+       colorkey=list(space="right"), 
        panel = function(...){
          panel.levelplot(...)
-         panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
-         }
+         panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3)
+         },
+       scales=list(x=list(at=xat),y=list(at=yat))
        )
 
   orl <- spplot(coverage, zcol = "COVRG", col.regions = vector_colors, 
