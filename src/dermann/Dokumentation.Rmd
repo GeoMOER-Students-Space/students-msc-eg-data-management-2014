@@ -28,7 +28,7 @@ Note that the code for the installation of the packages is conditional. "Require
 In the next step we'll write the function. First you will see the entire function and then the parts it contains will be discussed separately. You will have to know your dataset before you write the function. So it's a good idea to check the parameters before you start writing the function.
 
 ```{r,warning=FALSE}
-visualizer <- function (raster, vector, palname="Reds",lines,){
+visualizer <- function (raster, vector, palname="Reds",lines){
   vector_classes <- cut(vector@data$NAT, c(0, 2, 4, 6, 8, 10))
   vector_colors <- colorRampPalette(brewer.pal(5,palname))(5)
   min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
@@ -106,7 +106,6 @@ As you can see all that's left to do is define the plotting parameters of the sh
 To see if the works load the Band 3 of the Fogo Landsat image and the shapefile containing the dataset with the number of natural species, check if they are loaded correctly and then run the function.
 
 ```{r}
-
 landsat_Kanal3 <- raster("E:/MasterMarburg/Data Management/Data/fogo_landsat_2014-11-24/LC82100502014328LGN00_B3.tif")
 plot(landsat_Kanal3)
 Beob <- readOGR("E:/MasterMarburg/Data Management/Data/field_survey/data_2014_subset1.shp", "data_2014_subset1")
@@ -114,7 +113,7 @@ Beob <- spTransform(Beob, CRS(projection(landsat_Kanal3)))
 Beob.Punkte <- Beob
 plot(Beob.Punkte)
 plot(Beob)
-visualizer(landsat_Kanal3, Beob.Punkte, "Greens")
+visualizer(landsat_Kanal3, Beob.Punkte, "Greens",5)
 ```
 
 Well done! :) You stretched the colors and added a spatial point vector attribute
