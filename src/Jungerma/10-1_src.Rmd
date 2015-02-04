@@ -38,11 +38,6 @@ Hierbei werden zunächst die Klassen Vektorattribute definiert, die später auch
 
 Danach wird die Ausdehnung des Rasters definiert, um es mit einem Rahmen plotten zu können. Sowohl die Vektorpuntkte, als auch das Raster werden mit dem Lattice Paket geplottet. Zur Darstellung des Landsat-Rasters werden 256 Graustufen verwendet.
 
-Durch den Befehl "scales" kann dem Raster noch ein Koordinatensystem auf Basis 
-seiner Ausdehnung angefügt werden, um eine entsprechende optische Raumreferenz für den Betrachter zu bieten. 
-
-Über den Befehl "as.layer()" kann ein Plot, dem anderen als Ebene hinzugefügt werden. 
-
 ```{r}
 layerFunction <- function (raster, vector, grid.lines){
 classes <- cut(vector@data$COVRG, c(0, 20, 40, 60, 80, 100, 120))
@@ -68,6 +63,10 @@ plot1 <- spplot(raster, col.regions = gray.colors(256), at = breaks,
          panel.levelplot(...)
          panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
          },
+       # Durch den Befehl "scales" kann dem Raster noch ein Koordinatensystem 
+       # auf Basis seiner Ausdehnung angefügt werden, um eine entsprechende 
+       # optische 
+       # Raumreferenz für den Betrachter zu bieten. 
          scales = list(x = list(at = xat, rot = 90),
                      y = list(at = yat)))
        
@@ -76,6 +75,11 @@ plot2 <- spplot(vector, zcol = "COVRG", col.regions = shp_colors,
               cuts = c(0, 20, 40, 60, 80, 100, 120))
 
 plot1 + as.layer(plot2)
+
+ # Über den Befehl "as.layer()" kann ein Plot, dem anderen als Ebene 
+ # hinzugefügt werden. 
+
+
 }
 
 ````
