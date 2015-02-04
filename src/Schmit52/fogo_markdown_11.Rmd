@@ -1,6 +1,6 @@
 title: The how-to you always wanted
 author: Theresa Schmitt
-date: Thursday, January 15, 2015
+date: Thursday, February 04, 2015
 output: html_document
 ========================================================
 First: Prepare your staff
