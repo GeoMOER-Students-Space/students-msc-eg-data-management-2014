@@ -28,7 +28,7 @@ Note that the code for the installation of the packages is conditional. "Require
 In the next step we'll write the function. First you will see the entire function and then the parts it contains will be discussed separately. You will have to know your dataset before you write the function. So it's a good idea to check the parameters before you start writing the function.
 
 ```{r,warning=FALSE}
-visualizer <- function (raster, vector, palname="Reds"){
+visualizer <- function (raster, vector, palname="Reds",lines,){
   vector_classes <- cut(vector@data$NAT, c(0, 2, 4, 6, 8, 10))
   vector_colors <- colorRampPalette(brewer.pal(5,palname))(5)
   min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
@@ -36,9 +36,9 @@ visualizer <- function (raster, vector, palname="Reds"){
   
   breaks <- seq(min, max, length.out = 256)
   yat = seq(extent(raster)@ymin, 
-            extent(raster)@ymax, length.out = 5)
+            extent(raster)@ymax, length.out = lines)
   xat = seq(extent(raster)@xmin, 
-            extent(raster)@xmax, length.out = 5)
+            extent(raster)@xmax, length.out = lines)
   
   
   
@@ -57,14 +57,14 @@ visualizer <- function (raster, vector, palname="Reds"){
 }
 ```
 
-To create a function define the name of the function and what parameters are required to be put in by the user. In our case the user has to tell the function which raster and which vector are to be used. For the color palette the default value "Reds" is set and if you write a help page for the function it would be important to mention the "" are obligatory and only palettes from brewer.pal can be used. Then we define more necessary parameters for the plot.
+To create a function define the name of the function and what parameters are required to be put in by the user. In our case the user has to tell the function which raster and which vector are to be used. For the color palette the default value "Reds" is set and if you write a help page for the function it would be important to mention the "" are obligatory and only palettes from brewer.pal can be used. lines will determine the amount of coordinate grid lines on the map. Now we'll define more necessary parameters for the plot. 
 
 
     vector_classes <- cut(vector@data$NAT, c(0, 2, 4, 6, 8, 10))
     vector_colors <- colorRampPalette(brewer.pal(5,palname))(5)
 
 
-Now the classes for the visualization of the vector are being chosen. In this case we are using the number of natural species, saved under NAT. As the values range between 0 and 9 the classes range from 0 to 10.
+The classes for the visualization of the vector have to be chosen now. In this case we are using the number of natural species, saved under NAT. As the values range between 0 and 9 the classes range from 0 to 10.
 The same is done for the raster image in the following code: 
 
 
@@ -73,9 +73,9 @@ The same is done for the raster image in the following code:
 
     breaks <- seq(min, max, length.out = 256)
     yat = seq(extent(raster)@ymin, 
-                extent(raster)@ymax, length.out = 5)
+                extent(raster)@ymax, length.out = lines)
     xat = seq(extent(raster)@xmin, 
-                extent(raster)@xmax, length.out = 5)
+                extent(raster)@xmax, length.out = lines)
 
 
 We only want to display the values within the standard deviation to stretch the color range and ignore extreme values. For this we define the minimum and the maximum values and create a sequence of 256 values between the maximum and minimum. yat and xat create a coordinate system on top of the image. For this we use the extent of the raster image, which is saved under (raster)@ymin, (raster)@ymax, (raster)@xmin, (raster)@xmax. By creating a sequence of 5 the image is going to be divided by 4 lines. To understand this keep in mind that the limits are also counted as lines. At this point we're just creating the variable to be used in the plot funtion below.
