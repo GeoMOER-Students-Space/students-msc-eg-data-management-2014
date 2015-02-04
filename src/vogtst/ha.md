@@ -1,0 +1,88 @@
+
+Umgebung definieren, Libraries hinzuf?gen
+
+
+```r
+#Erstellt mit Hilfe von karsten Schäfer
+inpath <- "C:/Users/Steffen/Desktop/Uni/DM"
+setwd(inpath)
+
+library(sp)
+library(raster)
+library(rgdal)
+library(RColorBrewer)
+library(latticeExtra)
+```
+
+#1
+
+Datengrundlage einlesen, Projektion definieren
+
+```r
+base.tif <- raster("LC82100502014328LGN00_B10_K.tif")
+inpath <- "C:/Users/Steffen/Desktop/Uni/DM"
+setwd(inpath)
+field <- readOGR("data_2014_subset1.shp", "data_2014_subset1")
+```
+
+```
+## OGR data source with driver: ESRI Shapefile 
+## Source: "data_2014_subset1.shp", layer: "data_2014_subset1"
+## with 161 features and 6 fields
+## Feature type: wkbPoint with 2 dimensions
+```
+
+```r
+field <- spTransform(field, CRS(projection(base.tif)))
+vegetation <- field
+```
+
+
+
+Die in a gespeicherte Funktion gliedert sich wie folgt auf:
+In z.31 Variablen definieren und Werte zu Klassen konvertieren.
+Diese Klassen in z. 32. in Gr?nt?nen in 6 Abstufungen einf?rben.
+Min und Max werden durch Hilfe einer Mittelwert und Standardabweichungberechnung errechnet.
+Nutzung von 265 Farbabstufungen mit seq() jeweils f?r die x und y-Achse mit den Ma?en des Rasters.
+Plotten des Rasters mit spplot mit Graustufen, mit den integrierten Punkten.
+Schlie?en der Funktion
+
+
+```r
+gridcount=5 #default
+a <- function (raster, vector, gridcount){
+vector_classes <- cut(vector@data$COVRG, c(0, 20, 40, 60, 80, 100, 120))
+vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)
+min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
+max <- mean(getValues(raster)) + sd(getValues(raster))
+
+breaks <- seq(min, max, length.out = 256)
+yat = seq(extent(raster)@ymin, 
+                extent(raster)@ymax, length.out = gridcount)
+xat = seq(extent(raster)@xmin, 
+                extent(raster)@xmax, length.out = gridcount)
+
+
+
+plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+       key = list(space = 'left', text = list(levels(vector_classes)), 
+                     points = list(pch = 21, cex = 2, fill = vector_colors)),
+       colorkey=list(space="right"),
+       panel = function(...){
+         panel.levelplot(...)
+         panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+         },
+       scales = list(x = list(at=xat),
+                     y = list(at=yat)))
+
+orl <- spplot(vector, zcol = "COVRG", col.regions = vector_colors, 
+              cuts = c(0, 20, 40, 60, 80, 100, 120))
+
+plt + as.layer(orl)
+}
+
+
+a(base.tif, vegetation, gridcount)
+```
+
+![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
