@@ -26,7 +26,7 @@ Make function for mapping
 Set content, colours, grids and attributes
 
 ```{r,eval=FALSE}
-map <- function (raster, vector_utm, vector_colors ="default", gnbr=5, attr=3) {
+map <- function (raster, vector_utm, vector_colors ="default", gnbr=3, attr=3) {
   vector_classes <- cut(vector_utm@data[, attr], 6)
   
   vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)
@@ -60,6 +60,6 @@ map <- function (raster, vector_utm, vector_colors ="default", gnbr=5, attr=3) {
 Plot the function after you've checked if function works
 
 ```{r,eval=TRUE}
-map (raster, vector_utm, gnbr =5, attr =3)
+map (raster, vector_utm, gnbr =3, attr =3)
 
 ```
