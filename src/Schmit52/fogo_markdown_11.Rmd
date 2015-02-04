@@ -1,13 +1,16 @@
-title: The how-to you always wanted
+title: W11-1: Version control
 author: Theresa Schmitt
 date: Thursday, February 04, 2015
 output: html_document
+W11-1: Version control
 ========================================================
-First: Prepare your staff
-Set your workingdirectory
+setwd("C:Users/Theresa/dm/fogo_08")
+
+First: Prepare your staff,
+Set your workingdirectory,
 Read files in and check the projection
 
-```{r,eval=FALSE}
+```{r,eval=T}
 library (sp)
 library (raster)
 library (rgdal)
@@ -19,16 +22,18 @@ library (RColorBrewer)
 raster <- raster("LC82100502014328LGN00_B3.tif")
 vector <- readOGR("data_2014_subset1.shp", layer = "data_2014_subset1")
 vector_utm <- spTransform(vector, CRS(projection(raster)))
+
 ```
 
-Make function for mapping
+Make function for mapping;
 Set content, colours, grids and attributes
 
-```{r,eval=FALSE}
+```{r,eval=T}
 map <- function (raster, vector_utm, vector_colors ="default", gnbr=3, attr=3) {
-  vector_classes <- cut(vector_utm@data[, attr], 6)
+  vector_classes <- cut(vector_utm@data[,attr], 6)
   
-  vector_colors <- colorRampPalette(brewer.pal(6,"Blues"))(6)
+  if(vector_colors == "default"){
+    vector_colors <- colorRampPalette(brewer.pal(6,"Blues"))(6)
   
   yat = seq(extent(raster)@ymin, 
             extent(raster)@ymax, length.out = gnbr)
@@ -48,17 +53,20 @@ map <- function (raster, vector_utm, vector_colors ="default", gnbr=3, attr=3) {
                 },
                 scales = list(x = list(at = xat),
                               y = list(at = yat)))
-
+  
   
   orl <- spplot(vector_utm, zcol = "COVRG", col.regions = vector_colors)
   
   plt + as.layer(orl)
 }
+}
+
 ```
 
 Plot the function after you've checked if function works
 
 ```{r,eval=TRUE}
-map (raster, vector_utm, gnbr =3, attr =3)
+
+map(raster, vector_utm, gnbr=3, attr=3)
 
 ```
