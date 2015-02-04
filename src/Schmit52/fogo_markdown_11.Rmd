@@ -29,7 +29,7 @@ Set content, colours, grids and attributes
 map <- function (raster, vector_utm, vector_colors ="default", gnbr=3, attr=3) {
   vector_classes <- cut(vector_utm@data[, attr], 6)
   
-  vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)
+  vector_colors <- colorRampPalette(brewer.pal(6,"Blues"))(6)
   
   yat = seq(extent(raster)@ymin, 
             extent(raster)@ymax, length.out = gnbr)
