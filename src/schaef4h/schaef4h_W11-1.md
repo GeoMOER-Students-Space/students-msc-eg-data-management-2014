@@ -52,7 +52,7 @@ create.map <- function (tif, vector, grid.nmbr){
                   panel.levelplot(...)
                   panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 5) 
                 },
-              scales = list(x = list(at = xat),
+              scales = list(x = list(at = xat,rot=90),
                             y = list(at = yat)))
   
   orl <- spplot(vector, zcol = "COVRG", col.regions = vector_colors, 
@@ -67,7 +67,7 @@ defining that the grid should appear in 8 sections. This number can be defined r
 
 
 ```r
-create.map(fogo.rast, survey2014, 8)
+create.map(fogo.rast, survey2014, 10)
 ```
 
 ![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
