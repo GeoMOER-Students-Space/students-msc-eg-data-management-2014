@@ -39,9 +39,9 @@ Hierbei werden zunächst die Klassen Vektorattribute definiert, die später auch
 Danach wird die Ausdehnung des Rasters definiert, um es mit einem Rahmen plotten zu können. Sowohl die Vektorpuntkte, als auch das Raster werden mit dem Lattice Paket geplottet. Zur Darstellung des Landsat-Rasters werden 256 Graustufen verwendet.
 
 ```{r}
-layerFunction <- function (raster, vector, grid.lines){
+layerFunction <- function (raster, vector, grid.lines=5, color="Blues",col=6){
 classes <- cut(vector@data$COVRG, c(0, 20, 40, 60, 80, 100, 120))
-shp_colors <- colorRampPalette(brewer.pal(6,"Blues"))(6)
+shp_colors <- colorRampPalette(brewer.pal(col,color))(col)
 
 
 min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
@@ -87,5 +87,10 @@ plot1 + as.layer(plot2)
 Zuletzt müssen der Funktion nur noch die Datensätze übergeben werden. 
 
 ```{r}
-layerFunction(landsat.tif, shp, 5)
+layerFunction(landsat.tif, shp)
+ # Um die Funktion auszuführen, muss ihr nun ein Raster und Vektordatensatz 
+ # übergeben werden. Ein individueller Gitterabstand für das Koordinatennetz ist 
+ # optional. Ausserdem können noch die Farben für die Vektorpunkte und 
+ # ihre Unterteilung
+ # festgelegt werden
 ```
