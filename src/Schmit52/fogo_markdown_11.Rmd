@@ -8,7 +8,6 @@ Set your workingdirectory
 Read files in and check the projection
 
 ```{r,eval=FALSE}
-setwd ("C:/Users/Theresa/dm/fogo_08")
 library (sp)
 library (raster)
 library (rgdal)
