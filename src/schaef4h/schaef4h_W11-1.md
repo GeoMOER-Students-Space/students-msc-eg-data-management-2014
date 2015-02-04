@@ -30,9 +30,9 @@ the map type figure.
 
 
 ```r
-create.map <- function (tif, vector, grid.nmbr){
+create.map <- function (tif, vector, grid.nmbr=5, color="Reds"){
   vector_classes <- cut(vector@data$COVRG, c(0, 20, 40, 60, 80, 100, 120))
-  vector_colors <- colorRampPalette(brewer.pal(6,"Reds"))(6)
+  vector_colors <- colorRampPalette(brewer.pal(6,color))(6)
   min <- max(mean(getValues(tif)) - sd(getValues(tif)), 0)
   max <- mean(getValues(tif)) + sd(getValues(tif))
   
@@ -67,7 +67,7 @@ defining that the grid should appear in 8 sections. This number can be defined r
 
 
 ```r
-create.map(fogo.rast, survey2014, 10)
+create.map(fogo.rast, survey2014, 10, "Greens")
 ```
 
 ![plot of chunk unnamed-chunk-3](figure/unnamed-chunk-3-1.png) 
