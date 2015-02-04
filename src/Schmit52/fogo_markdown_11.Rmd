@@ -1,0 +1,65 @@
+title: The how-to you always wanted
+author: Theresa Schmitt
+date: Thursday, January 15, 2015
+output: html_document
+========================================================
+First: Prepare your staff
+Set your workingdirectory
+Read files in and check the projection
+
+```{r,eval=FALSE}
+setwd ("C:/Users/Theresa/dm/fogo_08")
+library (sp)
+library (raster)
+library (rgdal)
+library (lattice)
+install.packages("latticeExtra")
+library (latticeExtra)
+library (RColorBrewer)
+
+raster <- raster("LC82100502014328LGN00_B3.tif")
+vector <- readOGR("data_2014_subset1.shp", layer = "data_2014_subset1")
+vector_utm <- spTransform(vector, CRS(projection(raster)))
+```
+
+Make function for mapping
+Set content, colours, grids and attributes
+
+```{r,eval=FALSE}
+map <- function (raster, vector_utm, vector_colors ="default", gnbr=5, attr=3) {
+  vector_classes <- cut(vector_utm@data[, attr], 6)
+  
+  vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)
+  
+  yat = seq(extent(raster)@ymin, 
+            extent(raster)@ymax, length.out = gnbr)
+  xat = seq(extent(raster)@xmin, 
+            extent(raster)@xmax, length.out = gnbr)
+  
+  breaks <- quantile(raster, seq(0.0, 1.0, length.out = 256))
+  colorkey_scale <- 1/breaks  
+  
+  plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+                key = list(space = 'left', text = list(levels(vector_classes)), 
+                           points = list(pch = 21, cex = 2, fill = vector_colors)),
+                colorkey=list(space="right"),
+                panel = function(...){
+                  panel.levelplot(...)
+                  panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+                },
+                scales = list(x = list(at = xat),
+                              y = list(at = yat)))
+
+  
+  orl <- spplot(vector_utm, zcol = "COVRG", col.regions = vector_colors)
+  
+  plt + as.layer(orl)
+}
+```
+
+Plot the function after you've checked if function works
+
+```{r,eval=TRUE}
+map (raster, vector_utm, gnbr =5, attr =3)
+
+```
