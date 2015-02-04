@@ -1,7 +1,7 @@
 ---
 title: How to write a function that visualizes a spatial point vector attribute over a contrast stretched raster image
 author: "Diana Dermann und Daniela Krampe"
-date: "Wednesday, January 28, 2015"
+date: "Wednesday, February 04, 2015"
 output: html_document
 ---
 This How-To will explain how to write a function that visualizes a spatial point vector attribute over a contrast stretched raster image. 
@@ -49,10 +49,8 @@ visualizer <- function (raster, vector, palname="Reds"){
                 panel = function(...){
                   panel.levelplot(...)
                   panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3)
-                  
-                }
+                  }
   )
-  
   Farben <- spplot(vector, zcol = "NAT", col.regions = vector_colors, cuts = c(0, 2, 4, 6, 8, 10))
   
   abb + as.layer(Farben)
@@ -61,33 +59,28 @@ visualizer <- function (raster, vector, palname="Reds"){
 
 To create a function define the name of the function and what parameters are required to be put in by the user. In our case the user has to tell the function which raster and which vector are to be used. For the color palette the default value "Reds" is set and if you write a help page for the function it would be important to mention the "" are obligatory and only palettes from brewer.pal can be used. Then we define more necessary parameters for the plot.
 
-```{r}
-vector_classes <- cut(vector@data$NAT, c(0, 2, 4, 6, 8, 10))
-vector_colors <- colorRampPalette(brewer.pal(5,palname))(5)
-```
+
+    vector_classes <- cut(vector@data$NAT, c(0, 2, 4, 6, 8, 10))
+    vector_colors <- colorRampPalette(brewer.pal(5,palname))(5)
+
 
 Now the classes for the visualization of the vector are being chosen. In this case we are using the number of natural species, saved under NAT. As the values range between 0 and 9 the classes range from 0 to 10.
 The same is done for the raster image in the following code: 
 
-```{r}
-min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
-max <- mean(getValues(raster)) + sd(getValues(raster))
 
-breaks <- seq(min, max, length.out = 256)
-yat = seq(extent(raster)@ymin, 
+    min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
+    max <- mean(getValues(raster)) + sd(getValues(raster))
+
+    breaks <- seq(min, max, length.out = 256)
+    yat = seq(extent(raster)@ymin, 
                 extent(raster)@ymax, length.out = 5)
-xat = seq(extent(raster)@xmin, 
+    xat = seq(extent(raster)@xmin, 
                 extent(raster)@xmax, length.out = 5)
-
-```
-
 
 
 We only want to display the values within the standard deviation to stretch the color range and ignore extreme values. For this we define the minimum and the maximum values and create a sequence of 256 values between the maximum and minimum. yat and xat create a coordinate system on top of the image. For this we use the extent of the raster image, which is saved under (raster)@ymin, (raster)@ymax, (raster)@xmin, (raster)@xmax. By creating a sequence of 5 the image is going to be divided by 4 lines. To understand this keep in mind that the limits are also counted as lines. At this point we're just creating the variable to be used in the plot funtion below.
 
-
-```{r}
-  abb <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+    abb <- spplot(raster, col.regions = gray.colors(256), at = breaks,
                 
                 key = list(space = 'left', text = list(levels(vector_classes)),
                            points = list(pch = 21, cex = 2, fill = vector_colors)),
@@ -99,29 +92,24 @@ We only want to display the values within the standard deviation to stretch the 
                 panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3)
                   
 
-```
-
-
 Now we create the basis plot of the raster image. The grey.colors take up the entire range of 256. Remember, that we created the variable breaks further up and that it contains the values at which the color will change in the image.
 Key is creating the legend entry for the shapefile, while colorkey creates the legend for the raster images. The panel function allows the use of several plots in one, or in our case, it'll draw our cartographic grid of 4 lines.
 Now let's get to the last and easy bit.
 
-```{r}
-Farben <- spplot(vector, zcol = "NAT", col.regions = vector_colors, cuts = c(0, 2, 4, 6, 8, 10))
-  abb + as.layer(Farben)
 
-```
+    Farben <- spplot(vector, zcol = "NAT", col.regions = vector_colors, cuts = c(0, 2, 4, 6, 8, 10))
+    abb + as.layer(Farben)
 
- 
+
 As you can see all that's left to do is define the plotting parameters of the shapefile and then add the two plots together. Since we created variables for the plotting parameters we can simply put them together with a + and don't forget to add the shapefile as a layer ontop of the raster with the function as.layer. That's it. That's our function.
 
 To see if the works load the Band 3 of the Fogo Landsat image and the shapefile containing the dataset with the number of natural species, check if they are loaded correctly and then run the function.
 
 ```{r}
 
-landsat_Kanal3 <- raster("fogo_landsat_2014-11-24/LC82100502014328LGN00_B3.tif")
+landsat_Kanal3 <- raster("E:/MasterMarburg/Data Management/Data/fogo_landsat_2014-11-24/LC82100502014328LGN00_B3.tif")
 plot(landsat_Kanal3)
-Beob <- readOGR("C:/Users/Nena/Desktop/Uni-Master/1-Semester/Data-Management/Daten/de-ws-10-01/Anhänge_2015128/data_2014_subset1.shp", "data_2014_subset1")
+Beob <- readOGR("E:/MasterMarburg/Data Management/Data/field_survey/data_2014_subset1.shp", "data_2014_subset1")
 Beob <- spTransform(Beob, CRS(projection(landsat_Kanal3)))
 Beob.Punkte <- Beob
 plot(Beob.Punkte)
