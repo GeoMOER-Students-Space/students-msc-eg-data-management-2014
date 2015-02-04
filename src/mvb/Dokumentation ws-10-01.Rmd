@@ -1,0 +1,95 @@
+---
+title: "W10-1: Wie wird eine Funktion geschreiben, die räumliche Punktvektoren Attribute über ein kontrastgestrecktes Rasterbild visualisiert?"
+author: "D. Krampe"
+date: "Wednesday, January 28, 2015"
+output: html_document
+---
+
+
+####Packages laden####
+Zunächst werden alle benötigen Packages, wenn nötig, heruntergeladen und dann in das aktuelle RProjekt geladen.
+```{r, eval=TRUE} 
+if (!require(sp)){install.packages('sp')}
+if (!require(RColorBrewer)){install.packages('RColorBrewer')}
+if (!require(raster)){install.packages('raster')}
+if (!require(rgdal)){install.packages('rgdal')}
+if (!require(latticeExtra)){install.packages('latticeExtra')}
+
+library(sp)
+library(raster)
+library(rgdal)
+library(RColorBrewer)
+library(latticeExtra)
+```
+
+Im nächsten Schritt wird Arbeitsumgebung, in der die weiteren Ordner bzw. Dokumente liegen, definiert. Nun können die benötigten Daten eingelesen werden.Dies sind einmal der 3.Kanal der bereitgestellten tiff-Dateien und das Shapefile, dass die Beobachtungspunkte enthält. 
+Da die eingelesenen Daten unterschiedliche Projektionen vorweisen, müssen diese noch vereiheitliht werden. Außerdem können durch die Funktion
+plot() die geladenen Daten zunächst einmal angeguckt werden, bevor weiter mit ihnen gearbeitet wird.
+```{r,eval=TRUE}
+setwd ("C:/Users/Nena/Desktop/Uni-Master/1-Semester/Data-Management/Daten/dm-ws-08-01/")
+
+landsat_Kanal3 <- raster("fogo_landsat_2014-11-24/LC82100502014328LGN00_B3.tif")
+plot(landsat_Kanal3)
+
+Beob <- readOGR("C:/Users/Nena/Desktop/Uni-Master/1-Semester/Data-Management/Daten/de-ws-10-01/Anhänge_2015128/data_2014_subset1.shp", "data_2014_subset1")
+Beob <- spTransform(Beob, CRS(projection(landsat_Kanal3)))
+Beob.Punkte <- Beob
+plot(Beob.Punkte)
+plot(Beob)
+```
+
+####Vorberitung zum Erstellen der Abbildung####
+Es wird eine Funktion erstellt, mit deren Hilfe plots erstellt werden können, bei denen die Beobachtungspunkte
+auf der erzeugten Karte von Fogo überlagert werden. Zudem besitzt die Graphik zwei Legenden. Die Legende auf der
+liken Seite beschreibt die Farben der Punkte. Die Legende auf der rechten Seite gibt die Bedeutung der Farbskala wieder.
+Es wird definiert, dass die ausgeführt werden kann, wenn ihr ein Raster und ein Vektor übergeben werden kann.Durch palnames wird der Name der Farbpalette für die Punktdaten angegeben. Hier kann eine beliebige Farbe der Palette, die unter brewer.pal in der Hilfe nachgeschaut werden können.
+In den geschweiften Klammern wird die Funktion gebildet. Zunächst wird der Vektor in Klassen eingeteilt, dabei wird die gesuchte "number of natural species", die in der Variable NAT gespeichert ist, verwendet. Da die Werte bei NAT nur von 0 bis 9 gehen, wurde eine Einteilung von 6 Klassen in 2er Schritten von 0 bis 10 gewählt. In der nächsten Zeile wird die Farbpalette für die erzeugten Vektorklassen definiert.Um die Farbskala des Rasters zu strecken, wird ein minimaler und ein maximaler Wert für die Darstellung des Rasters gewählt. Als nächstes werden verschiedene Sequenzen definiert. Zzunächst wird eine Sequenz erstellt, die eine Länge von 256 aufweist. Zudem erstreckt sie sich vom Minimum bis zum Maximum der Werte des Rasters, die in der Abbildung dargestellt werden sollen. "breaks" wird in der Abbildung des Rasters spezifizieren, an welchen Werten sich die Farbe ändern soll(at=breaks). 
+Auch bei yat und xat werden Sequezen definiert. Diese geben später vor, wo sich die Linien des Koordinatensystems auf der Abbildung des Rasters befinden sollen. 
+Es sollen in 4 Bereiche vertikal bzw. horizontal gegliedert werden, daher werden 5 Linien benötigt. Die wird die erste Linie bei ymin bzw xmin gezogen.
+  
+####Erstellen der Abbildung innerhalb der Funktion####
+Mit der Definition von abb wird der Plot für das Raster definiert.
+Es wird eine graue Farbskala vorgegeben, wobei 256 Grautöne gewählt werden können.
+Mit key wird zunächst die Legende für die Punktdaten, also die Klasseneinteilung definiert. Diese soll links von der Abbildung sein und die Vektorenklassen beinhalten. Zudem sollen die Farbpunkte dargestellt werden.
+Durch den "colorkey" wird die Farbskala auf der rechten Seite der Abbildung festgelegt.
+Innerhalb der Funktion panel, die eine Darstellung der Vektor- und Rasterdaten innerhalb einer Abbildung ermöglicht, wird das Koordinatensystem der Abbildung erzeugt.
+
+Die Abbildung, die unter Farben gespeichert wird, ist die Darstellung der Vektordaten. Es wird also ein Vektor dargestellt, dessen Werte in der Spalte "NAT" zu finden sind. Die "vector_collors"wurden bereits im oberen Teil des Skriptes definiert sorgt für die Farbgebung der Punkte. Zudem sollen die Werte des Vektors wieder in 6 Klassen eingeteilt werden.
+
+Zum Schluss wird festgelegt, dass die Abbildung des Vektors als weiterer Layer innerhalb der Rasterabbildung gezeigt werden soll.
+
+```{r,eval=TRUE}
+Visualisierung <- function (raster, vector, palname="Reds"){
+  vector_classes <- cut(vector@data$NAT, c(0, 2, 4, 6, 8, 10))
+  vector_colors <- colorRampPalette(brewer.pal(5,palname))(5)
+  min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
+  max <- mean(getValues(raster)) + sd(getValues(raster))
+  
+  breaks <- seq(min, max, length.out = 256)
+  yat = seq(extent(raster)@ymin, 
+            extent(raster)@ymax, length.out = 5)
+  xat = seq(extent(raster)@xmin, 
+            extent(raster)@xmax, length.out = 5)
+  abb <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+                key = list(space = 'left', text = list(levels(vector_classes)), 
+                           points = list(pch = 21, cex = 2, fill = vector_colors)),
+                colorkey=list(space="right"),
+                panel = function(...){
+                  panel.levelplot(...)
+                  panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3)
+  
+                }
+  )
+  
+  Farben <- spplot(vector, zcol = "NAT", col.regions = vector_colors, 
+                cuts = c(0, 2, 4, 6, 8, 10 ))
+  
+  abb + as.layer(Farben)
+}
+```
+####Abbildung aufrufen####
+Als letzter Schritt wird nun die Funktion "Visualisierung" mit dem gewünschten Raster und Vektor ausgeführt. Das gleiche passiert in der nächsten Zeile, nur das hier die Punkte für der Vektordaten grün angezeigt werden.
+```{r,eval=TRUE}
+Visualisierung(landsat_Kanal3, Beob.Punkte)
+Visualisierung(landsat_Kanal3, Beob.Punkte, "Greens")
+```
