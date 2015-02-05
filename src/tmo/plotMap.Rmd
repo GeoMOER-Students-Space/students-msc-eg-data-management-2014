@@ -1,28 +1,27 @@
 ---
 title: "Kartendarstellungen in R"
 author: "Elena Rinn"
-date: "Thursday, January 15, 2015"
+date: "Thursday, February 05, 2015"
 output: html_document
+runtime: shiny
 ---
 
 Dieses Skript beinhaltet eine Funktion mit welcher ein Raster-Layer und Daten
-aus einer Vektordatei in einem gemeinsamen Plot dargestellt werden können. Es 
-wird außerdem eine Legende und ein Koordinatengitter erzeugt.
+aus einer Vektordatei in einem gemeinsamen Plot dargestellt werden koennen. Es 
+wird ausserdem eine Legende und ein Koordinatengitter erzeugt.
 
-Die folgende Pakete werden dazu benötigt.
-```{r, warning = FALSE, message = FALSE}
-library("raster")
-library("RColorBrewer")
-library("latticeExtra")
-library("maptools")
+Die folgende Pakete werden dazu benoetigt.
+```{r, warning = FALSE, message = FALSE, results = "hide"}
+packages <- c("raster", "RColorBrewer", "latticeExtra", "maptools", "rgdal")
+lapply(packages, library, character.only = TRUE)
 ```
 
 ```{r, echo = FALSE, message = FALSE, results="hide"}
 # Landsat-Datei
-landsat <- raster("D:/DataManagement/Data/LandsatFOGO/LC82100502014328LGN00_B3.tif")
+landsat <- raster("D:/2014-2015Winter/DataManagement/Data/LandsatFOGO/LC82100502014328LGN00_B3.tif")
 
 # BIS-Fogo
-survey <- readOGR("D:/DataManagement/Data/LandsatFOGO/data_2014_subset1.shp", 
+survey <- readOGR("D:/2014-2015Winter/DataManagement/Data/LandsatFOGO/data_2014_subset1.shp", 
                   "data_2014_subset1")
 survey <- spTransform(survey, crs("+proj=utm +zone=26 +datum=WGS84 +units=m +no_defs +ellps=WGS84 +towgs84=0,0,0"))
 
@@ -30,8 +29,8 @@ survey[3]
 
 ```
 
-Der Funktion plotMap(ras, vec, col) werden eine Raster-Datei und ein 
-SpatialPointsDataFrame, sowie die Position der darzustellenden Attributspalte übergeben. Die räumlichen Daten  müssen bereits in der gleichen Projektion vorliegen.
+Der Funktion plotMap(ras, vec, col, grid, vector_colors) werden eine Raster-Datei und ein 
+SpatialPointsDataFrame, die Position der darzustellenden Attributspalte, die Anzahl von Unterteilungen des Koordinatensystems und eine Farbpalette uebergeben. Die raeumlichen Daten  muessen bereits in der gleichen Projektion vorliegen.
 
 Die einzelnen Arbeitsschritte werden im Code selbst kommentiert.
 
@@ -53,10 +52,9 @@ plotMap <- function(ras, vec, col, grid=5, vector_colors = "default"){
   # Vektordaten in Klassen einteilen
   vector_classes <- cut(survey@data[[col]], 6)
 
-  # Farbschema für die Vektrodaten definieren
-  if(vector_colors == "default"){
-    vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)  
-  }
+  # Farbschema f?r die Vektordaten definieren
+  vector_colors <- colorRampPalette(brewer.pal(6, vector_colors))(6)
+  
 
   # Raster-Plot und beide Legenden definieren
   plt <- spplot(ras, col.regions = gray.colors(256), at = breaks,
@@ -78,12 +76,30 @@ plotMap <- function(ras, vec, col, grid=5, vector_colors = "default"){
 }
 ```
 
-So sieht das Endergebnis aus:
+Hier werden das Dropdown-MenÃ¼ und die Schieberegler definiert. Daraus wird dann das Endergebnis erzeugt.
 
-```{r, echo = FALSE, warning=FALSE}
-#benutzerdefinierte Farbpalette
-col <- colorRampPalette(brewer.pal(6,"Reds"))(6)
+```{r}
+inputPanel(
+ 
+  selectInput(inputId = "colors", label = "Farbe:",
+              choices = c("Reds", "Greens", "Blues"), selected = "Reds"),
+ 
+  sliderInput(inputId = "grids", label = "Number of grid lines:",
+              min = 1, max = 10, value = 5, step = 1,
+              animate = animationOptions(interval = 1000, loop = TRUE, 
+                                         playButton = NULL, pauseButton = NULL)),
+  
+  sliderInput(inputId = "att", label = "Attribute column:",
+              min = 1, max = 6, value = 1, step = 1,
+              animate = animationOptions(interval = 1000, loop = TRUE, 
+                                         playButton = NULL, pauseButton = NULL))
+  
+  )
 
-plotMap(landsat, survey, col = 3, grid = 4, vector_colors = col)
+renderPlot({
+  plotMap(landsat, survey, col = input$att, grid = input$grids, vector_colors = input$colors)  
+})
+
+
 
 ```
