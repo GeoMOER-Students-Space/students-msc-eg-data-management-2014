@@ -1,0 +1,78 @@
+---
+title: 'W10-1: The how-to you always wanted'
+author: "Kevin Frac"
+date: "Thursday, January 15, 2015"
+output: html_document
+---
+
+This is an exercise in writing an HTML markdown document in the programming language R. We will follow the same basic steps that we always do in R, namely import data, manipulate it and then enjoy the fruits of our labor -- the output -- but this time in the markup format. In the course of this specific exercise, we will use data collected from a field survey of Fogo and a LANDSAT image from December 2014.
+
+Begin by setting a working directory.
+
+```{r, message=FALSE}
+setwd("D:/Datenmanagement/WS-08-01/fieldsurvey2014_subset1_shape/")
+```
+
+To complete the assigned exercise, you will also need to import several libraries. Since many of these packages are not part of the standard R/RStudio suite, you may need to install them separately. To do so, use the function install.package. After that, you can import them using the function library().
+
+```{r, message=FALSE}
+library(rgdal)
+library(raster)
+library(sp)
+library(RColorBrewer)
+library(latticeExtra)
+```
+
+Now that we've got our libraries loaded, the real fun can begin. First, we start by importing the data from the field survey and the Fogo raster. We'll name these variables 'vegetation' and 'landsat'. 
+
+```{r, message=FALSE}
+vegetation <- readOGR("D:/Datenmanagement/WS-08-01/fieldsurvey2014_subset1_shape/data_2014_subset1.shp", "data_2014_subset1")
+landsat <- raster("D:/Datenmanagement/WS-08-01/fieldsurvey2014_subset1_shape/LC82100502014328LGN00_B3.tif")
+vegetation <- spTransform(vegetation, CRS(projection(landsat)))
+```
+
+Finally, we write a function to plot the field data on the stretched raster.
+
+```{r}
+map <- function(raster, vector, vector_colors="default",
+                gnbr=5, attr=3){
+  vector_classes <- cut(vector@data[,attr], 6)
+  
+  if(vector_colors == "default"){
+    vector_colors <- colorRampPalette(brewer.pal(6,"Greens"))(6)
+  }
+  
+  min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
+  max <- mean(getValues(raster)) + sd(getValues(raster))
+  
+  breaks <- seq(min, max, length.out = 256)
+  
+  yat = seq(extent(raster)@ymin, 
+            extent(raster)@ymax, length.out = gnbr)
+  xat = seq(extent(raster)@xmin, 
+            extent(raster)@xmax, length.out = gnbr)
+  
+  plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+                key = list(space = 'left', text = list(levels(vector_classes)), 
+                           points = list(pch = 21, cex = 2, fill = vector_colors)),
+                colorkey=list(space="right"),
+                panel = function(...){
+                  panel.levelplot(...)
+                  panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+                },
+                scales = list(x = list(at = xat),
+                              y = list(at = yat)))
+  
+  orl <- spplot(vector, zcol = "COVRG", col.regions = vector_colors)
+  
+  plt + as.layer(orl)
+}
+
+vc <- colorRampPalette(brewer.pal(6,"Blues"))(6)
+```
+
+And now we can easily call the function like this:
+
+```{r}
+map(landsat, vegetation, gnbr=3, attr=4)
+```
