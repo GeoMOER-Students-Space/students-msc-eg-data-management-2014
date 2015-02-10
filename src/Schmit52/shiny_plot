@@ -1,0 +1,92 @@
+title: W11-1: Version control
+author: Theresa Schmitt
+date: Thursday, February 04, 2015
+output: html_document
+runtime: shiny
+========================================================
+library(shiny)
+library(grid)
+install.packages("gridExtra")
+library(gridExtra)
+
+setwd("C:/Users/Theresa/dm/fogo_08")
+
+First: Prepare your staff,
+Read files in and check the projection
+
+```{r, warning = FALSE, message = FALSE, results = "hide"}
+
+packages <- c("raster", "RColorBrewer", "latticeExtra", "maptools", "rgdal")
+lapply(packages, library, character.only = TRUE)
+
+raster <- raster("LC82100502014328LGN00_B3.tif")
+vector <- readOGR("data_2014_subset1.shp", layer = "data_2014_subset1")
+vector_utm <- spTransform(vector, CRS(projection(raster)))
+
+```
+
+Make function for mapping;
+Set content, colours, grids and attributes
+
+```{r}
+map <- function (raster, vector_utm, vector_colors ="default", gnbr=3, attr=3) {
+  vector_classes <- cut(vector_utm@data[,attr], 6)
+  
+  if(vector_colors == "default"){
+    vector_colors <- colorRampPalette(brewer.pal(6,"Blues"))(6)
+    
+  yat = seq(extent(raster)@ymin, 
+            extent(raster)@ymax, length.out = gnbr)
+  xat = seq(extent(raster)@xmin, 
+            extent(raster)@xmax, length.out = gnbr)
+  
+  breaks <- quantile(raster, seq(0.0, 1.0, length.out = 256))
+  colorkey_scale <- 1/breaks  
+  
+  plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+                key = list(space = 'left', text = list(levels(vector_classes)), 
+                           points = list(pch = 21, cex = 2, fill = vector_colors)),
+                colorkey=list(space="right"),
+                panel = function(...){
+                  panel.levelplot(...)
+                  panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+                },
+                scales = list(x = list(at = xat),
+                              y = list(at = yat)))
+  
+  
+  orl <- spplot(vector_utm, attr=3, col.regions = vector_colors)
+  
+  plt + as.layer(orl)
+}
+}
+
+map(raster, vector_utm, vector_colors ="default", gnbr=3, attr=3)
+
+```
+
+Plot the function as an interactive plot
+
+```{r, eval=TRUE}
+inputPanel(
+
+  selectInput(inputId = "colors", label = "Colour of vector points:",
+              choices = c("Greens", "Blues", "Reds"), selected = "Greens"),
+
+  sliderInput(inputId = "gnbr", label = "Number of grid lines:",
+              min = 1, max = 10, value = 3, step = 1,
+              animate = animationOptions(interval = 1000, loop = TRUE, 
+                                         playButton = NULL, pauseButton = NULL)),
+
+  sliderInput(inputId = "attr", label = "Attribute for vector:",
+              min = 1, max = 6, value = 3, step = 1,
+              animate = animationOptions(interval = 1000, loop = TRUE, 
+                                         playButton = NULL, pauseButton = NULL))
+  )
+
+ 
+renderPlot({
+  map(raster, vector_utm, attr = input$attr, gnbr = input$gnbr, vector_colors = input$colors)  
+})
+
+```
