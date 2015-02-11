@@ -1,4 +1,12 @@
-## Mapping a vector into a landsat image
+---
+title: "Shiny Map-Generator"
+author: "Ulrike Selig"
+date: "11.02.2015"
+output: html_document
+runtime: shiny
+---
+
+##Mapping a vector into a landsat image
 ========================================================
 
 *things we need for this worksheet*
@@ -9,44 +17,40 @@
 *Before we start writing our code, we need to do some preprocessing*
 
 load your requiered workspace and libraries
-```{r,message=FALSE}
+```{r,echo=F, message=FALSE}
 library(sp)
 library(raster)
 library(rgdal)
 library(RColorBrewer)
 library(latticeExtra)
 library (grid)
+library(gridExtra)
 ```
 
 ```{r,echo=FALSE, message=FALSE, results="hide"}
-setwd("D:/UNI/Master/WS_14-15/Data_management/Fogo/")
+setwd("/home/weiland/Documents/Uni_Master/Data_Management/1_RAW_Data/Fogo")
 raster <- raster("LC82100502014328LGN00_B3.tif")
 readvector <- readOGR("data_2014_subset1.shp", "data_2014_subset1")
 vector <- spTransform(readvector, CRS(projection(raster)))
 ```
 
-write a function for natural species, including the underlaying Landsat image, legend, colorramp for this vector natural species
-```{r,}
-NAT_MAP <- function (raster, vector, grnb=7, attr=3){
+Writing a function
+```{r, echo=FALSE}
+
+NAT_MAP <- function (raster, vector, grnb, attr, color){
 
 # Koordinatensystem des Rasters definieren mit einem siebener Grid
 yat = seq(extent(raster)@ymin, 
-                extent(raster)@ymax, length.out = 7)
+                extent(raster)@ymax, length.out = grnb)
 xat = seq(extent(raster)@xmin, 
-                extent(raster)@xmax, length.out = 7)
+                extent(raster)@xmax, length.out = grnb)
 
-# Vekoren in Klassen einteilen und Farbschema auswählen (wenn vector_colors="default gewünsct")
-# if(vector_colors == "default"){
- #   vector_colors <- colorRampPalette(brewer.pal(9,"YlGn"))(9)  
-  #}
+breaks <- seq(min, max, length.out=256)
 
- # breaks <- quantile(raster, seq(0.0, 1.0, length.out = 256))
-  #colorkey_scale <- 1/breaks
+#Erstellen einer (kontinuierlichen) Legende fÃ¼r das Raster und den Vektor
+vector_colors <- colorRampPalette(brewer.pal(9,color))(256)
 
-#Erstellen einer (kontinuierlichen) Legende für das Raster und den Vektor
-vector_colors <- colorRampPalette(brewer.pal(9,"YlGn"))(256)
-
-vector_classes <- cut(vector@data$NAT, seq(0, 9, length.out = 256))
+vector_classes <- cut(vector@data[,attr], seq(0, 9, length.out = 256))
 
 #plot for raster
 plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
@@ -59,7 +63,7 @@ plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
                      y = list(at = yat)))
 
 # continous legend for vector
-orl <- spplot(vector, zcol = "NAT", col.regions = vector_colors, cuts = 256,
+orl <- spplot(vector, zcol = attr, col.regions = vector_colors, cuts = 256,
               colorkey = TRUE)
 
 comb <- plt + as.layer(orl)
@@ -78,11 +82,21 @@ draw.colorkey(key = list(col = vector_colors, width = 2,
 }
 ```
 
-Run the main function with vector_colors="default" (Therefore you need to copy "vector_colors="default" in the function head above)
-```{r, echo=TRUE, include=TRUE}
-#NAT_MAP (raster, vector,vector_colors="default", grnb=7, attr =3)
+shiny map mit Regler für Attribute, Farben und Anzahl der Grids
+```{r, echo=FALSE}
+inputPanel(
+  selectInput("n_attr", label = "Attributes",
+              choices = c(1:6), selected = 6),
+  
+  selectInput("n_color", label = "Colors",
+              choices=c("Purples", "Reds", "YlGn"),selected="Purples"),
+  
+  sliderInput("n_grids", label="Gridlines", min=3, max=7,value=3, step=1)
+  )
+
+
+renderPlot({
+NAT_MAP(raster, vector,grnb=input$n_grids,attr=input$n_attr,color= input$n_color)
+})
 ```
-Run the main function with continous scale
-```{r, echo=TRUE, include=TRUE}
-NAT_MAP (raster, vector, grnb=7, attr =3)
-```
+

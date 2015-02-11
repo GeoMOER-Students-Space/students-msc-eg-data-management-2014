@@ -1,0 +1,72 @@
+---
+title: "Shiny Map-Generator"
+author: "Jochen Weiland"
+date: "05.02.2015"
+output: html_document
+runtime: shiny
+---
+```{r, echo=F,message=FALSE}
+
+
+
+library(sp)
+library(raster)
+library(rgdal)
+library(RColorBrewer)
+library(latticeExtra)
+setwd("/home/weiland/Documents/Uni_Master/Data_Management/1_RAW_Data/Fogo")
+raster <- raster("LC82100502014328LGN00_B3.tif")
+survey<-read.csv("plots_veg_anm_geo_2014.csv")
+coordinates(survey)<-~Lon-Lat
+projection(survey)<-"+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs" 
+vector <- spTransform(survey, CRS(projection(raster)))
+
+generate.map <- function (raster, vector,attribut,color,gridnumber=5){
+ 
+  vector_classes <- cut(vector@data[,attribut], c(seq(min(vector@data[,attribut],na.rm=T),max(vector@data[,attribut],na.rm=T),length.out=6)))
+  vector_colors <- colorRampPalette(brewer.pal(6,color))(6)
+  min <- max(mean(getValues(raster)) - sd(getValues(raster)), 0)
+  max <- mean(getValues(raster)) + sd(getValues(raster))
+ 
+  breaks <- seq(min, max, length.out = 256)
+  yat = seq(extent(raster)@ymin, 
+            extent(raster)@ymax, length.out = gridnumber)
+  xat = seq(extent(raster)@xmin, 
+            extent(raster)@xmax, length.out = gridnumber)
+ 
+ 
+ 
+  plt <- spplot(raster, col.regions = gray.colors(256), at = breaks,
+                key = list(space = 'left', text = list(levels(vector_classes)), 
+                           points = list(pch = 21, cex = 2, fill = vector_colors)),
+                colorkey=list(space="right"),
+                panel = function(...){
+                  panel.levelplot(...)
+                  panel.abline(h = yat, v = xat, col = "grey0", lwd = 0.8, lty = 3) 
+                }
+  )
+ 
+  orl <- spplot(vector, zcol = attribut, col.regions = vector_colors,
+                cuts=(seq(min(vector@data[,attribut],na.rm=T),max(vector@data[,attribut],na.rm=T),length.out=6)))
+ 
+  plt + as.layer(orl)
+}
+```
+
+```{r, echo=FALSE}
+inputPanel(
+  selectInput("n_color", label = "Select Color",
+              choices = c("Greens","Blues","Reds"), selected = "Greens"),
+  
+  sliderInput("n_attribute", label = "Select Attribute:",
+              min = 20, max = 30, value = 25, step = 1),
+  
+  sliderInput("n_gridnumber", label = "Select number of Grids:",
+              min = 0, max = 10, value = 5, step = 1)
+)
+
+renderPlot({
+generate.map(raster,vector,attribut=input$n_attribute,color=input$n_color,gridnumber=input$n_gridnumber)
+})
+```
+

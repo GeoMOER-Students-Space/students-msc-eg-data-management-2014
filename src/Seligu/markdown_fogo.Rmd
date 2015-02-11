@@ -89,3 +89,17 @@ Run the main function
 NAT_MAP (raster, vector, gnbr=7, attr =3)
 ```
 
+
+
+
+downViewport(trellis.vpname(name = "figure")) 
+vp1 <- viewport(x = -0.25, y = 1,
+                height = 1, width = 1,
+                just = c("centre", "top"),
+                name = "key.vp") 
+pushViewport(vp1) 
+draw.colorkey(key = list(col = vector_colors, width = 2,
+                          at = seq(0, 9, length.out = 256),
+                          space = "left"), draw = TRUE)
+# print out
+plt + as.layer(orl)
