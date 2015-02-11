@@ -37,8 +37,8 @@ xat = seq(extent(raster)@xmin,
  #   vector_colors <- colorRampPalette(brewer.pal(9,"YlGn"))(9)  
   #}
 
-  breaks <- quantile(raster, seq(0.0, 1.0, length.out = 256))
-  colorkey_scale <- 1/breaks
+ # breaks <- quantile(raster, seq(0.0, 1.0, length.out = 256))
+  #colorkey_scale <- 1/breaks
 
 #Erstellen einer (kontinuierlichen) Legende für das Raster und den Vektor
 vector_colors <- colorRampPalette(brewer.pal(9,"YlGn"))(256)
@@ -71,8 +71,7 @@ pushViewport(vp1)
 draw.colorkey(key = list(col = vector_colors, width = 2,
                           at = seq(0, 9, length.out = 256),
                           space = "left"), draw = TRUE)
-# print out
-plt + as.layer(orl)
+
 }
 ```
 
@@ -87,4 +86,6 @@ Run the main function with continous scale
 NAT_MAP (raster, vector, grnb=7, attr =3)
 ```
 
-![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-1.png) ![plot of chunk unnamed-chunk-5](figure/unnamed-chunk-5-2.png) 
+```
+## Error in append(list(formula, data = as(sdf, "data.frame"), aspect = aspect, : Objekt 'breaks' nicht gefunden
+```
