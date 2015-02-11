@@ -1,26 +1,30 @@
-In the first step the necessary libraries are loaded and the working directory is defined. 
-In addition the files needed for plotting are read in. 
-```{r, message=FALSE}
+
+```r
 library(sp)
 library(raster)
 library(rgdal)
 library(RColorBrewer)
 library(latticeExtra)
+library(shiny)
 
 setwd ("C:/Users/Karsten/Dropbox/msc_environmental_geography/semester_1/datamanagement/data")
 fogo.rast <- raster("LC82100502014328LGN00_B10.tif")
 survey2014 <- readOGR("data_2014_subset1.shp", "data_2014_subset1")
-survey2014 <- spTransform(survey2014, CRS(projection(fogo.rast)))
 ```
 
-The following function definies different parameters used for plotting the read in files. 
-To plot the function needs a raster, a vector and a number which defines the grid laying over
-the map type figure. 
+```
+## OGR data source with driver: ESRI Shapefile 
+## Source: "data_2014_subset1.shp", layer: "data_2014_subset1"
+## with 161 features and 6 fields
+## Feature type: wkbPoint with 2 dimensions
+```
 
-```{r}
-create.map <- function (tif, vector, grid.nmbr=5, color="Reds"){
-  vector_classes <- cut(vector@data$COVRG, c(0, 20, 40, 60, 80, 100, 120))
-  vector_colors <- colorRampPalette(brewer.pal(6,color))(6)
+```r
+survey2014 <- spTransform(survey2014, CRS(projection(fogo.rast)))
+
+create.map <- function (tif, vector, grid.nmbr=5, color="Reds", classes=6){
+  vector_classes <- cut(vector@data$COVRG, classes)
+  vector_colors <- colorRampPalette(brewer.pal(classes,color))(classes)
   min <- max(mean(getValues(tif)) - sd(getValues(tif)), 0)
   max <- mean(getValues(tif)) + sd(getValues(tif))
   
@@ -50,9 +54,29 @@ create.map <- function (tif, vector, grid.nmbr=5, color="Reds"){
 }
 ```
 
-In the last step, the above defined function is executed with a raster, a vector and a number 
-defining that the grid should appear in 8 sections. This number can be defined randomly. 
 
-```{r}
-create.map(fogo.rast, survey2014, 10, "Greens")
+```r
+inputPanel(
+
+  selectInput(inputId = "color", label = "Coloration of plotted vector:",
+              choices = c("Greens", "Blues", "Reds"), selected = "Greens"),
+
+  selectInput(inputId = "grid.nmbr", label = "Grid lines:",
+              choices = c(4, 6, 8), selected = 4),
+
+  selectInput(inputId = "classes", label = "Classes for plotted vector:",
+             choices = c(4, 6, 8), selected = 4),
+  )
 ```
+
+```
+## Error in flowLayout(...): Argument fehlt ohne Standard
+```
+
+```r
+renderPlot({
+  map(tif, vector, classes = input$classes, grid.nmbr = input$grid.nmbr, vector_colors = input$color)  
+})
+```
+
+<!--html_preserve--><div id="out31804afc2ca2b1de" class="shiny-plot-output" style="width: 100% ; height: 400px"></div><!--/html_preserve-->
